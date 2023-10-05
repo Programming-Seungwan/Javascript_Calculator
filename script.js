@@ -13,18 +13,15 @@ const currentOperandTextElement = document.querySelector(
   '[data-current-operand]'
 );
 
-// 계산기의 기능을 구현하는 것은 클래스를 정의해놓고, 그 메서드로 진행하는 것 good!
 class Calculator {
-  // 처음 인스턴스가 만들어질 때 생성자 함수는 반드시 실행된다
+  // 생성자를 통해 여러 상태들이 인스턴스로 만들어질 때 생성된다
   constructor(previousOperandTextElement, currentOperandTextElement) {
     this.previousOperandTextElement = previousOperandTextElement;
     this.currentOperandTextElement = currentOperandTextElement;
     this.clear();
   }
 
-  // clear 메서드는 생성자에서 실행되기에 무조건 인스턴스에 존재한다
   clear() {
-    // 다음 클래스의 세 멤버는 일종의 상태(state)와도 같다고 생각하면 좋다
     this.currentOperand = '';
     this.previousOperand = '';
     this.operation = undefined;
@@ -35,27 +32,28 @@ class Calculator {
     this.currentOperand = this.currentOperand.toString().slice(0, -1);
   }
 
+  // 숫자 버튼을 누를 때마다 실행되는 메서드
   appendNumber(number) {
     if (number === '.' && this.currentOperand.includes('.')) return;
-    this.currentOperand = this.currentOperand.toString() + number.toString();
+    this.currentOperand = this.currentOperand + number;
   }
-
+  // operator가 클릭되면, currentOperand는 previousOperand로 올라가고
+  // currrentOperand는 빈 상태가 된다
   chooseOperation(operation) {
-    // operator가 클릭되면, currentOperand는 previousOperand로 올라가고
-    // currrentOperand는 빈 상태가 된다
-    // 이미 previousOperand에 숫자가 올라간 상태에서 연산자를 눌르면 그냥 무시되어야 함
+    // 이미 previousOperand에 데이터가 올라간 상태에서 연산자를 눌르면 그냥 무시되어야 함
     if (this.currentOperand === '') return;
-    // previosOperand에 뭐가 있는 상태로 연산자 버튼을 누르면
-    // 이미 currentOperand에는 뭐가 있다는 확신은 얻었음
+
     // 그러면 compute() 메서드가 실행됨
     if (this.previousOperand !== '') {
       this.compute();
     }
+    // 첫 if문에 걸리지 않는다면 아래의 코드는 꼭 실행됩니다
     this.operation = operation;
     this.previousOperand = this.currentOperand;
     this.currentOperand = '';
   }
 
+  // 계산 시에 이전 이후 operand와 opreation의 변화가 핵심
   compute() {
     let computation;
     const prev = parseFloat(this.previousOperand);
@@ -78,6 +76,7 @@ class Calculator {
         return;
     }
 
+    // 아래의 내용은 chooseOperation의 아랫쪽 코드와 연결됩니다 -> previousOperand가 currentOperand가 된다는 의미
     this.currentOperand = computation;
     this.operation = undefined;
     this.previousOperand = '';
@@ -85,9 +84,11 @@ class Calculator {
   // 숫자를 포맷팅 해주는 함수
   getDisplayNumber(number) {
     const stringNumber = number.toString();
+    // 문자열의 split 메서드를 통해서 정수부와 소수부로 나눠줌
     const integerDigits = parseFloat(stringNumber.split('.')[0]);
-    const decimalDigits = stringNumber.split('.')[1];
+    const decimalDigits = stringNumber.split('.')[1]; // decimal은 소수라는 의미를 가짐
     let integerDisplay;
+
     if (isNaN(integerDigits)) {
       integerDisplay = '';
     } else {
@@ -95,6 +96,8 @@ class Calculator {
         maximumFractionDigits: 0,
       });
     }
+
+    // 얕은 비교를 해줘야 제대로 작동함. 즉 undefined와 null을 같다고 판별할 수 있어야 됨
     if (decimalDigits != null) {
       return `${integerDisplay}.${decimalDigits}`;
     } else {
@@ -102,7 +105,7 @@ class Calculator {
     }
   }
 
-  // output div의 내용들을 새로 렌더링 해주는 기능의 메서드임
+  // 메모리 상에만 존재하는 previous&currentOperand를 DOM 요소에 적용하는 메서드
   updateDisplay() {
     this.currentOperandTextElement.innerText = this.getDisplayNumber(
       this.currentOperand
